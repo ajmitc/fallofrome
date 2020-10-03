@@ -1,0 +1,14 @@
+package fallofrome.game;
+
+public enum PhaseStep {
+    START_PHASE,
+    END_PHASE,
+
+    SETUP_PLACE_FORCES,
+
+    LOYAL_ROMAN_MOVEMENT,
+    LOYAL_ROMAN_COMBAT,
+
+    PLACE_ROMAN_REPLACEMENTS,
+    BRIBE_BARBARIANS
+}
