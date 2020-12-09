@@ -23,7 +23,7 @@ public class BarbarianCreationTable {
             case F:
                 return 4;
         }
-        return 0;
+        return 1;
     }
 
     public static ForcePlacement getBarbarianCreation(){

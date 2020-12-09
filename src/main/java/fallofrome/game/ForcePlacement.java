@@ -6,21 +6,32 @@ public class ForcePlacement {
     private Allegiance allegiance;
     private UnitType unitType;
     private int strength;
+    private boolean rebelling;
 
     public ForcePlacement(String province, Allegiance allegiance, UnitType unitType, int strength){
-        this(province, null, allegiance, unitType, strength);
+        this(province, null, allegiance, unitType, strength, false);
     }
 
     public ForcePlacement(String province, String area, Allegiance allegiance, UnitType unitType, int strength){
+        this(province, area, allegiance, unitType, strength, false);
+    }
+
+    public ForcePlacement(String province, Allegiance allegiance, UnitType unitType, int strength, boolean rebelling){
+        this(province, null, allegiance, unitType, strength, rebelling);
+    }
+
+    public ForcePlacement(String province, String area, Allegiance allegiance, UnitType unitType, int strength, boolean rebelling){
         this.province = province;
         this.area = area;
         this.allegiance = allegiance;
         this.unitType = unitType;
         this.strength = strength;
+        this.rebelling = rebelling;
     }
 
     public Force toForce(){
         Force force = new Force(allegiance, unitType, strength);
+        force.setRebelling(rebelling);
         return force;
     }
 
@@ -42,5 +53,13 @@ public class ForcePlacement {
 
     public int getStrength() {
         return strength;
+    }
+
+    public void setStrength(int strength) {
+        this.strength = strength;
+    }
+
+    public String toString(){
+        return strength + " " + allegiance + " " + unitType + " in " + province + (area != null? " " + area: "");
     }
 }

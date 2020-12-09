@@ -182,6 +182,16 @@ public class Board {
         connections.add(new AreaConnection(area2, area1, movementCost2_1));
     }
 
+    /**
+     * Return the Area defined as ProvinceName-ID or ProvinceAbbr-ID
+     * @param code
+     * @return
+     */
+    public Area getArea(String code){
+        String[] parts = code.trim().split("-");
+        return getArea(parts[0], parts[1].charAt(0));
+    }
+
     public Area getArea(String provinceName, char id){
         Province province = getProvince(provinceName);
         return province.getArea(id);

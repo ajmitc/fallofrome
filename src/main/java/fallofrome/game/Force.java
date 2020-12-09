@@ -9,6 +9,7 @@ public class Force {
     private Allegiance allegiance;
     private UnitType unitType;
     private int strength;
+    private boolean rebelling;
 
     private int movementPoints;
 
@@ -16,14 +17,20 @@ public class Force {
     private Area destinationArea;
     private List<AreaConnection> pathToDestination;
 
+    private int x, y;
+
     public Force(Allegiance allegiance, UnitType unitType, int strength){
         this.allegiance = allegiance;
         this.unitType = unitType;
         this.strength = strength;
+        this.rebelling = false;
 
         movementPoints = 0;
         destinationArea = null;
         pathToDestination = null;
+
+        x = 0;
+        y = 0;
     }
 
     public Allegiance getAllegiance() {
@@ -50,6 +57,14 @@ public class Force {
         this.strength = strength;
     }
 
+    public boolean isRebelling() {
+        return rebelling;
+    }
+
+    public void setRebelling(boolean rebelling) {
+        this.rebelling = rebelling;
+    }
+
     public int getMovementPoints() {
         return movementPoints;
     }
@@ -72,6 +87,19 @@ public class Force {
 
     public void setPathToDestination(List<AreaConnection> pathToDestination) {
         this.pathToDestination = pathToDestination;
+    }
+
+    public int getX() {
+        return x;
+    }
+
+    public int getY() {
+        return y;
+    }
+
+    public void setCoord(int mx, int my){
+        this.x = mx;
+        this.y = my;
     }
 
     public String toString(){

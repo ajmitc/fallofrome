@@ -4,6 +4,7 @@ import fallofrome.game.board.Area;
 import fallofrome.game.board.Board;
 import fallofrome.game.scenario.Scenario;
 
+import java.awt.*;
 import java.util.HashMap;
 import java.util.Map;
 

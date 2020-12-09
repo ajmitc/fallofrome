@@ -1,6 +1,5 @@
 package fallofrome;
 
-import fallofrome.dev.MapBuilderDialog;
 import fallofrome.game.*;
 import fallofrome.game.board.AreaConnection;
 import fallofrome.game.board.Province;
@@ -10,13 +9,16 @@ import fallofrome.game.table.InternalRevolutionTable;
 import fallofrome.game.board.Area;
 import fallofrome.game.table.LegionRebellionTable;
 import fallofrome.util.Util;
+import fallofrome.view.GameSidePanel;
 import fallofrome.view.PopupUtil;
 import fallofrome.view.View;
 
+import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
 import java.util.*;
+import java.util.List;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
@@ -64,10 +66,16 @@ public class GameController implements MouseListener, MouseMotionListener {
                 // Get Area clicked
                 Area area = view.getGamePanel().getBoardPanel().getAreaClicked(e.getX(), e.getY());
                 // check if valid selection
-                if (area.getProvince().equals(forceToPlace.getProvince())){
+                if (area.getProvince().getName().equals(forceToPlace.getProvince())){
                     // place unit
-                    area.addForce(forceToPlace.toForce());
-                    forceToPlace = null;
+                    Force f = forceToPlace.toForce();
+                    f.setStrength(1);
+                    f.setCoord(e.getX(), e.getY());
+                    area.addForce(f);
+                    forceToPlace.setStrength(forceToPlace.getStrength() - 1);
+                    if (forceToPlace.getStrength() == 0)
+                        forceToPlace = null;
+                    view.refresh();
                 }
                 else {
                     PopupUtil.popupNotification(view.getFrame(), "Place Force", "You must select an Area in " + forceToPlace.getProvince());
@@ -123,10 +131,13 @@ public class GameController implements MouseListener, MouseMotionListener {
 
     public void run(){
         while (model.getGame().getPhase() != Phase.GAMEOVER){
+            view.refresh();
             switch (model.getGame().getPhase()) {
                 case SETUP:
                     switch (model.getGame().getPhaseStep()) {
                         case START_PHASE:
+                            view.getGamePanel().getGameSidePanel().appendOutputLn("*** Setup ***", GameSidePanel.BOLD_ITALIC);
+                            doSetup();
                             setupForcePlacements = model.getGame().getScenario().getForcePlacements().stream().filter(fp -> fp.getArea() == null).collect(Collectors.toList());
                             if (!setupForcePlacements.isEmpty()) {
                                 model.getGame().setPhaseStep(PhaseStep.SETUP_PLACE_FORCES);
@@ -135,11 +146,14 @@ public class GameController implements MouseListener, MouseMotionListener {
                             break;
                         case SETUP_PLACE_FORCES:
                             if (!setupForcePlacements.isEmpty()) {
-                                forceToPlace = setupForcePlacements.remove(0);
-                                PopupUtil.popupNotification(
-                                        view.getFrame(),
-                                        "Place Force",
-                                        "Place " + forceToPlace.getStrength() + " " + forceToPlace.getAllegiance() + " Legions in " + forceToPlace.getProvince());
+                                if (forceToPlace == null) {
+                                    forceToPlace = setupForcePlacements.remove(0);
+                                    PopupUtil.popupNotification(
+                                            view.getFrame(),
+                                            "Place Force",
+                                            "Place " + forceToPlace.getStrength() + " " + forceToPlace.getAllegiance() + " Legions in " + forceToPlace.getProvince());
+                                    view.getGamePanel().getGameSidePanel().appendOutputLn("Place " + forceToPlace.getStrength() + " Legions in " + forceToPlace.getProvince());
+                                }
                                 return;
                             }
                             model.getGame().setPhaseStep(PhaseStep.END_PHASE);
@@ -155,6 +169,7 @@ public class GameController implements MouseListener, MouseMotionListener {
                 case INTERNAL_REVOLUTION_PHASE:
                     switch (model.getGame().getPhaseStep()) {
                         case START_PHASE:
+                            view.getGamePanel().getGameSidePanel().appendOutputLn("*** Internal Revolution Phase ***", GameSidePanel.BOLD_ITALIC);
                             doInternalRevolutionPhase();
                             model.getGame().setPhaseStep(PhaseStep.END_PHASE);
                             break;
@@ -169,6 +184,7 @@ public class GameController implements MouseListener, MouseMotionListener {
                 case NON_ROMAN_NON_LOYAL_ROMAN_MOVEMENT_PHASE:
                     switch (model.getGame().getPhaseStep()) {
                         case START_PHASE:
+                            view.getGamePanel().getGameSidePanel().appendOutputLn("*** Non-Roman & Non-Loyal-Roman Movement Phase ***", GameSidePanel.BOLD_ITALIC);
                             doNonRomanNonLoyalRomanMovementPhase();
                             model.getGame().setPhaseStep(PhaseStep.END_PHASE);
                             break;
@@ -183,6 +199,7 @@ public class GameController implements MouseListener, MouseMotionListener {
                 case NON_ROMAN_NON_LOYAL_ROMAN_COMBAT_PHASE:
                     switch (model.getGame().getPhaseStep()) {
                         case START_PHASE:
+                            view.getGamePanel().getGameSidePanel().appendOutputLn("*** Non-Roman & Non-Loyal-Roman Combat Phase ***", GameSidePanel.BOLD_ITALIC);
                             doNonRomanNonLoyalRomanCombatPhase();
                             model.getGame().setPhaseStep(PhaseStep.END_PHASE);
                             break;
@@ -197,6 +214,7 @@ public class GameController implements MouseListener, MouseMotionListener {
                 case BARBARIAN_CREATION_PHASE:
                     switch (model.getGame().getPhaseStep()) {
                         case START_PHASE:
+                            view.getGamePanel().getGameSidePanel().appendOutputLn("*** Barbarian Creation Phase ***", GameSidePanel.BOLD_ITALIC);
                             doBarbarianCreationPhase();
                             model.getGame().setPhaseStep(PhaseStep.END_PHASE);
                             break;
@@ -211,6 +229,7 @@ public class GameController implements MouseListener, MouseMotionListener {
                 case LOYAL_ROMAN_MOVEMENT_PHASE:
                     switch (model.getGame().getPhaseStep()) {
                         case START_PHASE:
+                            view.getGamePanel().getGameSidePanel().appendOutputLn("*** Loyal Roman Movement Phase ***", GameSidePanel.BOLD_ITALIC);
                             doLoyalRomanMovementPhase();
                             model.getGame().setPhaseStep(PhaseStep.LOYAL_ROMAN_MOVEMENT);
                             break;
@@ -227,6 +246,7 @@ public class GameController implements MouseListener, MouseMotionListener {
                 case LOYAL_ROMAN_COMBAT_PHASE:
                     switch (model.getGame().getPhaseStep()) {
                         case START_PHASE:
+                            view.getGamePanel().getGameSidePanel().appendOutputLn("*** Loyal Roman Combat Phase ***", GameSidePanel.BOLD_ITALIC);
                             doLoyalRomanCombatPhase();
                             model.getGame().setPhaseStep(PhaseStep.LOYAL_ROMAN_COMBAT);
                             break;
@@ -243,6 +263,7 @@ public class GameController implements MouseListener, MouseMotionListener {
                 case LEGION_REBELLION_PHASE:
                     switch (model.getGame().getPhaseStep()) {
                         case START_PHASE:
+                            view.getGamePanel().getGameSidePanel().appendOutputLn("*** Legion Rebelliono Phase ***", GameSidePanel.BOLD_ITALIC);
                             doLegionRebellionPhase();
                             model.getGame().setPhaseStep(PhaseStep.END_PHASE);
                             break;
@@ -257,6 +278,7 @@ public class GameController implements MouseListener, MouseMotionListener {
                 case CONTROL_DETERMINATION_PHASE:
                     switch (model.getGame().getPhaseStep()) {
                         case START_PHASE:
+                            view.getGamePanel().getGameSidePanel().appendOutputLn("*** Control Determination Phase ***", GameSidePanel.BOLD_ITALIC);
                             doControlDeterminationPhase();
                             model.getGame().setPhaseStep(PhaseStep.END_PHASE);
                             break;
@@ -271,6 +293,7 @@ public class GameController implements MouseListener, MouseMotionListener {
                 case BARBARIAN_ATTRITION_PHASE:
                     switch (model.getGame().getPhaseStep()) {
                         case START_PHASE:
+                            view.getGamePanel().getGameSidePanel().appendOutputLn("*** Barbarian Attrition Phase ***", GameSidePanel.BOLD_ITALIC);
                             doBarbarianAttritionPhase();
                             model.getGame().setPhaseStep(PhaseStep.END_PHASE);
                             break;
@@ -285,6 +308,7 @@ public class GameController implements MouseListener, MouseMotionListener {
                 case TAX_COLLECTION_DISBURSEMENT_PHASE:
                     switch (model.getGame().getPhaseStep()) {
                         case START_PHASE:
+                            view.getGamePanel().getGameSidePanel().appendOutputLn("*** Tax Collection & Distribution Phase ***", GameSidePanel.BOLD_ITALIC);
                             doTaxCollectionDisbursementPhase();
                             model.getGame().setPhaseStep(PhaseStep.END_PHASE);
                             break;
@@ -299,6 +323,7 @@ public class GameController implements MouseListener, MouseMotionListener {
                 case ROMAN_PERSIAN_REPLACEMENT_PHASE:
                     switch (model.getGame().getPhaseStep()) {
                         case START_PHASE:
+                            view.getGamePanel().getGameSidePanel().appendOutputLn("*** Roman & Persian Replacement Phase ***", GameSidePanel.BOLD_ITALIC);
                             doRomanPersianReplacementPhase();
                             // Don't set END_PHASE here, it is taken care of in the method above
                             break;
@@ -316,6 +341,7 @@ public class GameController implements MouseListener, MouseMotionListener {
                 case BARBARIAN_BRIBE_PHASE:
                     switch (model.getGame().getPhaseStep()) {
                         case START_PHASE:
+                            view.getGamePanel().getGameSidePanel().appendOutputLn("*** Barbarian Bribe Phase ***", GameSidePanel.BOLD_ITALIC);
                             doBarbarianBribePhase();
                             // Don't set END_PHASE here, it is taken care of in the method above
                             break;
@@ -332,6 +358,7 @@ public class GameController implements MouseListener, MouseMotionListener {
                 case GAME_TURN_RECORD_PHASE:
                     switch (model.getGame().getPhaseStep()) {
                         case START_PHASE:
+                            view.getGamePanel().getGameSidePanel().appendOutputLn("*** Game Record Phase ***", GameSidePanel.BOLD_ITALIC);
                             doGameTurnRecordPhase();
                             model.getGame().setPhaseStep(PhaseStep.END_PHASE);
                             break;
@@ -347,6 +374,23 @@ public class GameController implements MouseListener, MouseMotionListener {
         }
     }
 
+    public void doSetup(){
+        // Update coords of non-roman forces
+        model.getGame().getBoard().getProvinces().stream().forEach(p -> {
+            p.getAreas().stream().forEach(a -> {
+                for (int i = 0; i < a.getForces().size(); ++i){
+                    Force f = a.getForces().get(i);
+                    if (f.getX() == 0 && f.getY() == 0) {
+                        List<Point> placements = view.getGamePanel().getBoardPanel().getAreaForcePlacements(a);
+                        Point point = placements.get(i);
+                        f.setCoord(point.x, point.y);
+                        view.getGamePanel().getGameSidePanel().appendOutputLn(f.getStrength() + " " + f.getAllegiance() + " " + f.getUnitType() + " placed in " + a);
+                    }
+                }
+            });
+        });
+    }
+
     /**
      * Internal Revolution Phase
      * The Player rolls the die for the Internal Revolution Probability Table.  If the result is "yes," the die is
@@ -356,14 +400,39 @@ public class GameController implements MouseListener, MouseMotionListener {
      */
     public void doInternalRevolutionPhase(){
         if (InternalRevolutionTable.getProbability(model.getGame().getGamePeriod())){
-            List<ForcePlacement> forcePlacements = InternalRevolutionTable.getResults();
+            view.getGamePanel().getGameSidePanel().appendOutputLn("Internal Revolutions activated!");
+            List<ForcePlacement> forcePlacements = InternalRevolutionTable.getResults(model.getGame().getGamePeriod());
             for (ForcePlacement forcePlacement: forcePlacements){
                 Province province = model.getGame().getBoard().getProvince(forcePlacement.getProvince());
-                if (province.getController() != Allegiance.ROMAN)
+                if (province.getController() != Allegiance.ROMAN && model.getGame().getGamePeriod() != GamePeriod.G)
                     continue;
-                placeNonRomanForce(forcePlacement);
+                // Ignore result if Game Period 'G' and Persian controlled
+                if (province.getController() == Allegiance.PERSIAN && model.getGame().getGamePeriod() == GamePeriod.G)
+                    continue;
+                // Provinces in revolt do not revolt again, ignore result
+                if (province.isMilitiaRebelling())
+                    continue;
+                // Roman controlled provinces may reduce the strength of revolting militia by strength of legions in province
+                if (province.getController() == Allegiance.ROMAN){
+                    int romanStrength = province.getTotalForceStrength(Allegiance.ROMAN, UnitType.REGULAR);
+                    if (romanStrength >= forcePlacement.getStrength())
+                        continue;
+                    forcePlacement.setStrength(forcePlacement.getStrength() - romanStrength);
+                }
+
+                province.setMilitiaRebelling(true);
+                if (province.isMilitiaActivated()){
+                    // Change existing militia on map to rebelling
+                    List<Force> rebelMilitia = province.getForces(province.getController(), UnitType.MILITIA);
+                    rebelMilitia.stream().forEach(m -> m.setRebelling(true));
+                }
+                else {
+                    placeNonRomanForce(forcePlacement);
+                }
             }
         }
+        else
+            view.getGamePanel().getGameSidePanel().appendOutputLn("No Revolutions this turn");
     }
 
     /**
@@ -480,12 +549,17 @@ public class GameController implements MouseListener, MouseMotionListener {
      * @param allegiance
      */
     private void move(Allegiance allegiance){
+        view.getGamePanel().getGameSidePanel().appendOutputLn("Moving " + allegiance);
         if (allegiance == Allegiance.REBELLIOUS_ROMAN){
             moveRebelliousRomanLegions();
-            return;
         }
-        moveBarbarianRegulars(allegiance);
-        moveRaidingParties(allegiance);
+        else if (allegiance == Allegiance.PERSIAN){
+            movePersians();
+        }
+        else {
+            moveBarbarianRegulars(allegiance);
+            moveRaidingParties(allegiance);
+        }
     }
 
     /**
@@ -527,7 +601,7 @@ public class GameController implements MouseListener, MouseMotionListener {
             // Pop the first connection
             AreaConnection areaConnection = areaConnections.remove(0);
             if (areaConnection.getFromArea() != area) {
-                logger.severe("Force's (" + force + ") path to destination does not start at their Area (" + area + ")!");
+                logger.severe(force + " at " + area + " path to destination (" + force.getDestinationArea() + ") does not start at their Area (first node: " + areaConnection.getFromArea() + ")!");
                 return;
             }
 
@@ -536,9 +610,11 @@ public class GameController implements MouseListener, MouseMotionListener {
                 area.getForces().remove(force);
                 areaConnection.getToArea().getForces().add(force);
                 force.setMovementPoints(force.getMovementPoints() - areaConnection.getMovementCost());
+                view.getGamePanel().getGameSidePanel().appendOutputLn("Moved " + force + " from " + area + " to " + areaConnection.getToArea());
 
                 // Stop moving if there's an opposing force
                 if (areaConnection.getToArea().hasOpposingForce(force.getAllegiance())){
+                    view.getGamePanel().getGameSidePanel().appendOutputLn("   Opposing force found, cannot move further");
                     break;
                 }
             }
@@ -572,6 +648,7 @@ public class GameController implements MouseListener, MouseMotionListener {
                 }
             }
         }
+        view.getGamePanel().getGameSidePanel().appendOutputLn("Assigned " + force + " movement destination to " + target);
         force.setDestinationArea(target);
         force.setPathToDestination(model.getGame().getBoard().getPathToArea(area, force.getDestinationArea()));
     }
@@ -609,7 +686,7 @@ public class GameController implements MouseListener, MouseMotionListener {
             // Pop the first connection
             AreaConnection areaConnection = areaConnections.remove(0);
             if (areaConnection.getFromArea() != area) {
-                logger.severe("Force's (" + force + ") path to destination does not start at their Area (" + area + ")!");
+                logger.severe(force + " at " + area + " path to destination (" + force.getDestinationArea() + ") does not start at their Area (first node: " + areaConnection.getFromArea() + ")!");
                 return;
             }
 
@@ -618,9 +695,11 @@ public class GameController implements MouseListener, MouseMotionListener {
                 area.getForces().remove(force);
                 areaConnection.getToArea().getForces().add(force);
                 force.setMovementPoints(force.getMovementPoints() - areaConnection.getMovementCost());
+                view.getGamePanel().getGameSidePanel().appendOutputLn("Moved " + force + " from " + area + " to " + areaConnection.getToArea());
 
                 // Stop moving if there's an opposing force
                 if (areaConnection.getToArea().hasOpposingForce(force.getAllegiance())){
+                    view.getGamePanel().getGameSidePanel().appendOutputLn("   Found opposing force, cannot move further");
                     // TODO Initiate Combat if non-Loyal-Roman
                     break;
                 }
@@ -654,6 +733,7 @@ public class GameController implements MouseListener, MouseMotionListener {
                 }
             }
         }
+        view.getGamePanel().getGameSidePanel().appendOutputLn("Assigned " + force + " movement destination to " + target);
         force.setDestinationArea(target);
         force.setPathToDestination(model.getGame().getBoard().getPathToArea(area, force.getDestinationArea()));
     }
@@ -691,7 +771,7 @@ public class GameController implements MouseListener, MouseMotionListener {
             // Pop the first connection
             AreaConnection areaConnection = areaConnections.remove(0);
             if (areaConnection.getFromArea() != area) {
-                logger.severe("Force's (" + force + ") path to destination does not start at their Area (" + area + ")!");
+                logger.severe(force + " at " + area + " path to destination (" + force.getDestinationArea() + ") does not start at their Area (first node: " + areaConnection.getFromArea() + ")!");
                 return;
             }
 
@@ -700,9 +780,11 @@ public class GameController implements MouseListener, MouseMotionListener {
                 area.getForces().remove(force);
                 areaConnection.getToArea().getForces().add(force);
                 force.setMovementPoints(force.getMovementPoints() - areaConnection.getMovementCost());
+                view.getGamePanel().getGameSidePanel().appendOutputLn("Moved " + force + " from " + area + " to " + areaConnection.getToArea());
 
                 // Stop moving if there's an opposing force
                 if (areaConnection.getToArea().hasOpposingForce(force.getAllegiance())){
+                    view.getGamePanel().getGameSidePanel().appendOutputLn("   Found opposing force, cannot move further");
                     // TODO Initiate Combat if non-Loyal-Roman
                     break;
                 }
@@ -746,16 +828,16 @@ public class GameController implements MouseListener, MouseMotionListener {
         final List<String> ORDER = Arrays.asList(Province.PERSIA, Province.MESOPOTAMIA, Province.ARMENIA, Province.SYRIA, Province.ASIA);
 
         for (String provinceToCheck: ORDER){
-            Province province = model.getGame().getBoard().getProvince(provinceToCheck);
-            if (province.getController() != Allegiance.PERSIAN){
-                // All forces in lower priority provinces must move here
-                int forceProvinceOrder = ORDER.indexOf(area.getProvince().getName());
-                int thisProvinceOrder  = ORDER.indexOf(provinceToCheck);
-                if (thisProvinceOrder < forceProvinceOrder){
+            Province targetProvince = model.getGame().getBoard().getProvince(provinceToCheck);
+            if (targetProvince.getController() != Allegiance.PERSIAN){
+                // All forces in lower priority non-persian-controlled provinces must move here
+                //int forceProvinceOrder = ORDER.indexOf(area.getProvince().getName());
+                //int targetProvinceOrder = ORDER.indexOf(provinceToCheck);
+                //if (targetProvinceOrder < forceProvinceOrder){
                     // Assign the Area with the largest opposing force
                     Area target = null;
                     int targetMaxStrength = Integer.MIN_VALUE;
-                    for (Area provinceArea: province.getAreas()){
+                    for (Area provinceArea: targetProvince.getAreas()){
                         OptionalInt maxStrength =
                                 provinceArea.getForces().stream()
                                         .filter(f -> f.getAllegiance() != Allegiance.PERSIAN)
@@ -766,10 +848,11 @@ public class GameController implements MouseListener, MouseMotionListener {
                             targetMaxStrength = maxStrength.getAsInt();
                         }
                     }
+                    view.getGamePanel().getGameSidePanel().appendOutputLn("Assigned " + force + " movement destination to " + target);
                     force.setDestinationArea(target);
                     force.setPathToDestination(model.getGame().getBoard().getPathToArea(area, force.getDestinationArea()));
                     return;
-                }
+                //}
             }
         }
     }
@@ -801,7 +884,7 @@ public class GameController implements MouseListener, MouseMotionListener {
             // Pop the first connection
             AreaConnection areaConnection = areaConnections.remove(0);
             if (areaConnection.getFromArea() != area) {
-                logger.severe("Force's (" + force + ") path to destination does not start at their Area (" + area + ")!");
+                logger.severe(force + " at " + area + " path to destination (" + force.getDestinationArea() + ") does not start at their Area (first node: " + areaConnection.getFromArea() + ")!");
                 return;
             }
 
@@ -810,9 +893,11 @@ public class GameController implements MouseListener, MouseMotionListener {
                 area.getForces().remove(force);
                 areaConnection.getToArea().getForces().add(force);
                 force.setMovementPoints(force.getMovementPoints() - areaConnection.getMovementCost());
+                view.getGamePanel().getGameSidePanel().appendOutputLn("Moved " + force + " from " + area + " to " + areaConnection.getToArea());
 
                 // Stop moving if there's an opposing force
                 if (areaConnection.getToArea().hasOpposingForce(force.getAllegiance())){
+                    view.getGamePanel().getGameSidePanel().appendOutputLn("   Found opposing force, cannot move further");
                     // TODO Initiate Combat
                     break;
                 }
@@ -833,6 +918,7 @@ public class GameController implements MouseListener, MouseMotionListener {
     private void assignRebelliousRomanLegionsDestinationArea(Force force, Area area){
         force.setDestinationArea(model.getGame().getBoard().getArea(Province.ITALIA, 'A'));
         force.setPathToDestination(model.getGame().getBoard().getPathToArea(area, force.getDestinationArea()));
+        view.getGamePanel().getGameSidePanel().appendOutputLn("Assigned " + force + " movement destination to " + force.getDestinationArea());
     }
 
     /**
@@ -973,7 +1059,11 @@ public class GameController implements MouseListener, MouseMotionListener {
         if (ratio == 0)
             return;
         CombatResult combatResult = CombatResultsTable.get(ratio);
-        applyCombatResult(area, attacker, defenders, combatResult);
+        view.getGamePanel().getGameSidePanel().appendOutputLn(
+                "Combat at " + area + " between " + attacker + " and " + defenders.get(0).getAllegiance() +
+                        ": " + (combatResult != null? combatResult: "No Effect"));
+        if (combatResult != null)
+            applyCombatResult(area, attacker, defenders, combatResult);
     }
 
     /**
@@ -1060,6 +1150,7 @@ public class GameController implements MouseListener, MouseMotionListener {
                         .mapToDouble(f -> f.getStrength())
                         .sum();
         int losses = (int) defenderStrength / 2;
+        view.getGamePanel().getGameSidePanel().appendOutputLn("   " + defenders.get(0).getAllegiance() + " loses " + losses + " strength!");
         for (Force force: defenders){
             // Skip roman legions
             if (force.getAllegiance() == Allegiance.ROMAN && force.getUnitType() == UnitType.REGULAR){
@@ -1111,6 +1202,7 @@ public class GameController implements MouseListener, MouseMotionListener {
         int defenderStrength = defenders.stream().mapToInt(f -> f.getStrength()).sum();
         defenders.stream().forEach(f -> f.setStrength(0));
         attacker.setStrength(attacker.getStrength() - defenderStrength);
+        view.getGamePanel().getGameSidePanel().appendOutputLn("   " + defenders.get(0).getAllegiance() + " eliminated; " + attacker + " loses " + defenderStrength + " strength!");
 
         if (attacker.getAllegiance().isRoman() && attacker.getUnitType() == UnitType.REGULAR){
             model.getGame().addRomanReplacements(defenderStrength);
@@ -1142,6 +1234,7 @@ public class GameController implements MouseListener, MouseMotionListener {
         int defenderStrength = (int) Math.ceil(defenders.stream().mapToInt(f -> f.getStrength()).sum() / 2.0);
         defenders.stream().forEach(f -> f.setStrength(0));
         attacker.setStrength(attacker.getStrength() - defenderStrength);
+        view.getGamePanel().getGameSidePanel().appendOutputLn("   " + defenders.get(0).getAllegiance() + " eliminated; " + attacker + " loses " + defenderStrength + " strength!");
 
         if (attacker.getAllegiance().isRoman() && attacker.getUnitType() == UnitType.REGULAR){
             model.getGame().addRomanReplacements(defenderStrength);
@@ -1161,7 +1254,8 @@ public class GameController implements MouseListener, MouseMotionListener {
         int rolls = BarbarianCreationTable.getBarbarianCreationRolls(model.getGame().getGamePeriod(), model.getGame().getTurn());
         for (int i = 0; i < rolls; ++i){
             ForcePlacement forcePlacement = BarbarianCreationTable.getBarbarianCreation();
-            placeNonRomanForce(forcePlacement);
+            if (forcePlacement != null)
+                placeNonRomanForce(forcePlacement);
         }
     }
 
@@ -1182,6 +1276,7 @@ public class GameController implements MouseListener, MouseMotionListener {
      * @param forcePlacement
      */
     private void placeNonRomanForce(ForcePlacement forcePlacement){
+        view.getGamePanel().getGameSidePanel().appendOutputLn("Placing " + forcePlacement);
         Force force =
                 new Force(forcePlacement.getAllegiance(), forcePlacement.getUnitType(), forcePlacement.getStrength());
         // Area is defined, add the force and return
@@ -1255,6 +1350,7 @@ public class GameController implements MouseListener, MouseMotionListener {
     }
 
     private void doLegionRebellion(Area area, int numRebellingLegions){
+        view.getGamePanel().getGameSidePanel().appendOutputLn(numRebellingLegions + " Legions rebel in " + area);
         Force loyalRomanForce = area.getForce(Allegiance.ROMAN, UnitType.REGULAR);
         loyalRomanForce.setStrength(loyalRomanForce.getStrength() - numRebellingLegions);
         Force rebellingRomanForce = new Force(Allegiance.REBELLIOUS_ROMAN, UnitType.REGULAR, numRebellingLegions);
@@ -1326,10 +1422,17 @@ public class GameController implements MouseListener, MouseMotionListener {
     }
 
     private void determineControl(Province province){
-        if (romanControlled(province))
+        if (romanControlled(province)) {
+            if (province.getController() != Allegiance.ROMAN)
+                view.getGamePanel().getGameSidePanel().appendOutputLn("Romans gain control of " + province);
             province.setController(Allegiance.ROMAN);
-        else
-            province.setController(getNonRomanController(province));
+        }
+        else {
+            Allegiance newController = getNonRomanController(province);
+            if (province.getController() != newController)
+                view.getGamePanel().getGameSidePanel().appendOutputLn(newController + " gain control of " + province);
+            province.setController(newController);
+        }
     }
 
     /**
@@ -1502,6 +1605,7 @@ public class GameController implements MouseListener, MouseMotionListener {
                 int totalStrength = regulars.stream().mapToInt(f -> f.getStrength()).sum() + raidingParties.stream().mapToInt(f -> f.getStrength()).sum();
                 int losses = totalStrength / 2;
                 logger.info("[Barbarian Attrition Phase] Removing " + losses + " " + allegiance + " strength from " + province.getName());
+                view.getGamePanel().getGameSidePanel().appendOutputLn(allegiance + " loses " + losses + " strength in " + province);
                 for (Force regular: regulars){
                     if (regular.getStrength() > losses){
                         regular.setStrength(regular.getStrength() - losses);
@@ -1584,6 +1688,8 @@ public class GameController implements MouseListener, MouseMotionListener {
      */
     private void doTaxCollectionDisbursementPhase(){
         // Collect Taxes
+        int romanTreasurePrior = model.getGame().getRomanTreasury();
+        int persiansTreasuryPrior = model.getGame().getPersianTreasury();
         model.getGame().getBoard().getProvinces().stream().forEach(p -> {
             if (p.getController() == Allegiance.ROMAN){
                 if (p.getTotalForceStrength(Allegiance.REBELLIOUS_ROMAN, UnitType.REGULAR) > 0 || p.isMilitiaRebelling())
@@ -1602,6 +1708,8 @@ public class GameController implements MouseListener, MouseMotionListener {
         });
         logger.info("[Tax Collection Phase] Roman Treasury is now " + model.getGame().getRomanTreasury());
         logger.info("[Tax Collection Phase] Persian Treasury is now " + model.getGame().getPersianTreasury());
+        view.getGamePanel().getGameSidePanel().appendOutputLn("Romans collect " + (model.getGame().getRomanTreasury() - romanTreasurePrior) + " in taxes");
+        view.getGamePanel().getGameSidePanel().appendOutputLn("Persians collect " + (model.getGame().getPersianTreasury() - persiansTreasuryPrior) + " in taxes");
 
         // Get Provinces with Roman Legions and sort by strength
         List<Province> provincesWithLegions =
@@ -1639,6 +1747,7 @@ public class GameController implements MouseListener, MouseMotionListener {
                             Force rebel = new Force(Allegiance.REBELLIOUS_ROMAN, UnitType.REGULAR, 1);
                             area.addForce(rebel);
                             logger.info("[Tax Collection Phase] Legion rebels in " + area + " (you cannot pay them)!");
+                            view.getGamePanel().getGameSidePanel().appendOutputLn("Legions in " + area + " rebel (insufficient funds to pay them)!");
                         }
                     }
                 }
@@ -1677,6 +1786,7 @@ public class GameController implements MouseListener, MouseMotionListener {
                     int strengthNotPaid = force.getStrength() - strengthPaid;
                     force.setStrength(force.getStrength() - strengthNotPaid);
                     logger.info("[Tax Collection Phase] " + strengthNotPaid + " Persian Regulars in " + area + " eliminated (cannot be paid)!");
+                    view.getGamePanel().getGameSidePanel().appendOutputLn("Persian Regulars in " + area + " eliminated (insufficient funds to pay them)!");
                 }
             }
         }
@@ -1770,6 +1880,7 @@ public class GameController implements MouseListener, MouseMotionListener {
                 ForcePlacement forcePlacement = new ForcePlacement(Province.PERSIA, Allegiance.PERSIAN, UnitType.REGULAR, 1);
                 placeNonRomanForce(forcePlacement);
                 numPlaced += 1;
+                view.getGamePanel().getGameSidePanel().appendOutputLn("Placed " + forcePlacement);
             }
         }
 

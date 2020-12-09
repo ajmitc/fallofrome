@@ -15,9 +15,11 @@ public class LegionRebellionTable {
         // Modify die by gamePeriod
         switch (gamePeriod){
             case A:
-                die -= 1;
+                die -= 2;
                 break;
             case B:
+                die -= 1;
+                break;
             case E:
                 die += 1;
                 break;
@@ -30,22 +32,59 @@ public class LegionRebellionTable {
                 break;
         }
 
+        if (die < -1)
+            die = -1;
+        if (die > 7)
+            die = 7;
+
         switch (die){
+            case -1:
+            case 0:
             case 1:
-                break;
             case 2:
-                break;
+                return 0;
             case 3:
-                break;
+                if (numLegions >= 10){
+                    return (int) Math.ceil(numLegions * 0.2);
+                }
+                return 0;
             case 4:
-                break;
+                if (numLegions == 8 || numLegions == 9)
+                    return 2;
+                if (numLegions >= 10)
+                    return (int) Math.ceil(numLegions * 0.3);
+                return 0;
             case 5:
-                break;
+                if (numLegions == 5 || numLegions == 6)
+                    return 2;
+                if (numLegions >= 7 && numLegions <= 9)
+                    return 3;
+                if (numLegions >= 10)
+                    return (int) Math.ceil(numLegions * 0.5);
+                return 0;
             case 6:
-                break;
+                if (numLegions == 4)
+                    return 3;
+                if (numLegions == 5 || numLegions == 6)
+                    return 5;
+                if (numLegions == 7)
+                    return 4;
+                if (numLegions == 8 || numLegions == 9)
+                    return 6;
+                if (numLegions >= 10)
+                    return (int) Math.ceil(numLegions * 0.9);
+                return 0;
+            case 7:
+                if (numLegions == 4)
+                    return 4;
+                if (numLegions == 5 || numLegions == 6)
+                    return 6;
+                if (numLegions >= 7)
+                    return numLegions;
+                return 0;
         }
 
-        return numRebellingLegions;
+        return 0;
     }
 
     private LegionRebellionTable(){}
